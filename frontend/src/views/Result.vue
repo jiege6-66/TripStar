@@ -3,17 +3,17 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <a-button class="back-button" size="large" @click="goBack">
-        ← 返回首页
+        {{ t('result.backHome') }}
       </a-button>
       <a-space size="middle">
         <a-button v-if="!editMode" @click="toggleEditMode" type="default">
-          ✏️ 编辑行程
+          {{ t('result.editTrip') }}
         </a-button>
         <a-button v-else @click="saveChanges" type="primary">
-          💾 保存修改
+          {{ t('result.saveChanges') }}
         </a-button>
         <a-button v-if="editMode" @click="cancelEdit" type="default">
-          ❌ 取消编辑
+          {{ t('result.cancelEdit') }}
         </a-button>
 
         <!-- 导出按钮 -->
@@ -21,15 +21,15 @@
           <template #overlay>
             <a-menu>
               <a-menu-item key="image" @click="exportAsImage">
-                📷 导出为图片
+                {{ t('result.exportImage') }}
               </a-menu-item>
               <a-menu-item key="pdf" @click="exportAsPDF">
-                📄 导出为PDF
+                {{ t('result.exportPdf') }}
               </a-menu-item>
             </a-menu>
           </template>
           <a-button type="default">
-            📥 导出行程 <DownOutlined />
+            {{ t('result.exportTrip') }} <DownOutlined />
           </a-button>
         </a-dropdown>
       </a-space>
@@ -41,24 +41,24 @@
         <a-affix :offset-top="80">
           <a-menu mode="inline" :selected-keys="[activeSection]" @click="scrollToSection">
             <a-menu-item key="overview">
-              <span>📋 行程概览</span>
+              <span>{{ t('result.side.overview') }}</span>
             </a-menu-item>
             <a-menu-item key="budget" v-if="tripPlan.budget">
-              <span>💰 预算明细</span>
+              <span>{{ t('result.side.budget') }}</span>
             </a-menu-item>
             <a-menu-item key="map">
-              <span>📍 景点地图</span>
+              <span>{{ t('result.side.map') }}</span>
             </a-menu-item>
-            <a-sub-menu key="days" title="📅 每日行程">
+            <a-sub-menu key="days" :title="t('result.side.days')">
               <a-menu-item v-for="(day, index) in tripPlan.days" :key="`day-${index}`">
-                第{{ day.day_index + 1 }}天
+                {{ t('common.dayNumber', { day: day.day_index + 1 }) }}
               </a-menu-item>
             </a-sub-menu>
             <a-menu-item key="knowledge-graph">
-              <span>🔗 知识图谱</span>
+              <span>{{ t('result.side.graph') }}</span>
             </a-menu-item>
             <a-menu-item key="weather" v-if="tripPlan.weather_info && tripPlan.weather_info.length > 0">
-              <span>🌤️ 天气信息</span>
+              <span>{{ t('result.side.weather') }}</span>
             </a-menu-item>
           </a-menu>
         </a-affix>
@@ -71,41 +71,41 @@
           <!-- 左侧:行程概览和预算明细 -->
           <div class="left-info">
             <!-- 行程概览 -->
-            <a-card id="overview" :title="`${tripPlan.city}旅行计划`" :bordered="false" class="overview-card">
+            <a-card id="overview" :title="t('result.overviewTitle', { city: tripPlan.city })" :bordered="false" class="overview-card">
               <div class="overview-content">
                 <div class="info-item">
-                  <span class="info-label">📅 日期:</span>
-                  <span class="info-value">{{ tripPlan.start_date }} 至 {{ tripPlan.end_date }}</span>
+                  <span class="info-label">{{ t('result.dateLabel') }}</span>
+                  <span class="info-value">{{ t('result.dateRange', { start: tripPlan.start_date, end: tripPlan.end_date }) }}</span>
                 </div>
                 <div class="info-item">
-                  <span class="info-label">💡 建议:</span>
+                  <span class="info-label">{{ t('result.suggestionLabel') }}</span>
                   <span class="info-value">{{ tripPlan.overall_suggestions }}</span>
                 </div>
               </div>
             </a-card>
 
             <!-- 预算明细 -->
-            <a-card id="budget" v-if="tripPlan.budget" title="💰 预算明细" :bordered="false" class="budget-card">
+            <a-card id="budget" v-if="tripPlan.budget" :title="t('result.budget.title')" :bordered="false" class="budget-card">
               <div class="budget-grid">
                 <div class="budget-item">
-                  <div class="budget-label">景点门票</div>
+                  <div class="budget-label">{{ t('result.budget.attraction') }}</div>
                   <div class="budget-value">¥{{ tripPlan.budget.total_attractions }}</div>
                 </div>
                 <div class="budget-item">
-                  <div class="budget-label">酒店住宿</div>
+                  <div class="budget-label">{{ t('result.budget.hotel') }}</div>
                   <div class="budget-value">¥{{ tripPlan.budget.total_hotels }}</div>
                 </div>
                 <div class="budget-item">
-                  <div class="budget-label">餐饮费用</div>
+                  <div class="budget-label">{{ t('result.budget.meal') }}</div>
                   <div class="budget-value">¥{{ tripPlan.budget.total_meals }}</div>
                 </div>
                 <div class="budget-item">
-                  <div class="budget-label">交通费用</div>
+                  <div class="budget-label">{{ t('result.budget.transport') }}</div>
                   <div class="budget-value">¥{{ tripPlan.budget.total_transportation }}</div>
                 </div>
               </div>
               <div class="budget-total">
-                <span class="total-label">预估总费用</span>
+                <span class="total-label">{{ t('result.budget.total') }}</span>
                 <span class="total-value">¥{{ tripPlan.budget.total }}</span>
               </div>
             </a-card>
@@ -113,25 +113,25 @@
 
           <!-- 右侧:地图 -->
           <div class="right-map">
-            <a-card id="map" title="📍 景点地图" :bordered="false" class="map-card">
+            <a-card id="map" :title="t('result.mapTitle')" :bordered="false" class="map-card">
               <div id="amap-container" style="width: 100%; height: 100%"></div>
             </a-card>
           </div>
         </div>
 
         <!-- 知识图谱 -->
-        <a-card id="knowledge-graph" title="🔗 旅行知识图谱" :bordered="false" class="kg-card">
+        <a-card id="knowledge-graph" :title="t('result.graphTitle')" :bordered="false" class="kg-card">
           <div id="kg-chart-container" style="width: 100%; height: 600px;"></div>
           <div class="kg-legend">
             <span v-for="cat in graphCategories" :key="cat.name" class="kg-legend-item">
               <span class="kg-legend-dot" :style="{ background: getCategoryColor(cat.name) }"></span>
-              {{ cat.name }}
+              {{ getCategoryLabel(cat.name) }}
             </span>
           </div>
         </a-card>
 
         <!-- 每日行程:可折叠 -->
-        <a-card title="📅 每日行程" :bordered="false" class="days-card">
+        <a-card :title="t('result.dailyTitle')" :bordered="false" class="days-card">
           <a-collapse v-model:activeKey="activeDays" accordion>
             <a-collapse-panel
               v-for="(day, index) in tripPlan.days"
@@ -140,7 +140,7 @@
             >
               <template #header>
                 <div class="day-header">
-                  <span class="day-title">第{{ day.day_index + 1 }}天</span>
+                  <span class="day-title">{{ t('common.dayNumber', { day: day.day_index + 1 }) }}</span>
                   <span class="day-date">{{ day.date }}</span>
                 </div>
               </template>
@@ -148,21 +148,21 @@
               <!-- 行程基本信息 -->
               <div class="day-info">
                 <div class="info-row">
-                  <span class="label">📝 行程描述:</span>
+                  <span class="label">{{ t('result.dayDescription') }}</span>
                   <span class="value">{{ day.description }}</span>
                 </div>
                 <div class="info-row">
-                  <span class="label">🚗 交通方式:</span>
+                  <span class="label">{{ t('result.dayTransport') }}</span>
                   <span class="value">{{ day.transportation }}</span>
                 </div>
                 <div class="info-row">
-                  <span class="label">🏨 住宿:</span>
+                  <span class="label">{{ t('result.dayAccommodation') }}</span>
                   <span class="value">{{ day.accommodation }}</span>
                 </div>
               </div>
 
               <!-- 景点安排 -->
-              <a-divider orientation="left">🎯 景点安排</a-divider>
+              <a-divider orientation="left">{{ t('result.attractionTitle') }}</a-divider>
               <a-list
                 :data-source="day.attractions"
                 :grid="{ gutter: 16, column: 2 }"
@@ -215,22 +215,22 @@
 
                       <!-- 编辑模式下可编辑的字段 -->
                       <div v-if="editMode">
-                        <p><strong>地址:</strong></p>
+                        <p><strong>{{ t('result.fieldAddress') }}:</strong></p>
                         <a-input v-model:value="item.address" size="small" style="margin-bottom: 8px" />
 
-                        <p><strong>游览时长(分钟):</strong></p>
+                        <p><strong>{{ t('result.fieldVisitDurationMinutes') }}:</strong></p>
                         <a-input-number v-model:value="item.visit_duration" :min="10" :max="480" size="small" style="width: 100%; margin-bottom: 8px" />
 
-                        <p><strong>描述:</strong></p>
+                        <p><strong>{{ t('result.fieldDescription') }}:</strong></p>
                         <a-textarea v-model:value="item.description" :rows="2" size="small" style="margin-bottom: 8px" />
                       </div>
 
                       <!-- 查看模式 -->
                       <div v-else>
-                        <p><strong>地址:</strong> {{ item.address }}</p>
-                        <p><strong>游览时长:</strong> {{ item.visit_duration }}分钟</p>
-                        <p><strong>描述:</strong> {{ item.description }}</p>
-                        <p v-if="item.rating"><strong>评分:</strong> {{ item.rating }}⭐</p>
+                        <p><strong>{{ t('result.fieldAddress') }}:</strong> {{ item.address }}</p>
+                        <p><strong>{{ t('result.fieldVisitDuration') }}:</strong> {{ item.visit_duration }}{{ t('result.minuteUnit') }}</p>
+                        <p><strong>{{ t('result.fieldDescription') }}:</strong> {{ item.description }}</p>
+                        <p v-if="item.rating"><strong>{{ t('result.fieldRating') }}:</strong> {{ item.rating }}⭐</p>
                       </div>
                     </a-card>
                   </a-list-item>
@@ -238,22 +238,22 @@
               </a-list>
 
               <!-- 酒店推荐 -->
-              <a-divider v-if="day.hotel" orientation="left">🏨 住宿推荐</a-divider>
+              <a-divider v-if="day.hotel" orientation="left">{{ t('result.hotelTitle') }}</a-divider>
               <a-card v-if="day.hotel" size="small" class="hotel-card">
                 <template #title>
                   <span class="hotel-title">{{ day.hotel.name }}</span>
                 </template>
                 <a-descriptions :column="2" size="small">
-                  <a-descriptions-item label="地址">{{ day.hotel.address }}</a-descriptions-item>
-                  <a-descriptions-item label="类型">{{ day.hotel.type }}</a-descriptions-item>
-                  <a-descriptions-item label="价格范围">{{ day.hotel.price_range }}</a-descriptions-item>
-                  <a-descriptions-item label="评分">{{ day.hotel.rating }}⭐</a-descriptions-item>
-                  <a-descriptions-item label="距离" :span="2">{{ day.hotel.distance }}</a-descriptions-item>
+                  <a-descriptions-item :label="t('result.fieldAddress')">{{ day.hotel.address }}</a-descriptions-item>
+                  <a-descriptions-item :label="t('result.fieldType')">{{ day.hotel.type }}</a-descriptions-item>
+                  <a-descriptions-item :label="t('result.fieldPriceRange')">{{ day.hotel.price_range }}</a-descriptions-item>
+                  <a-descriptions-item :label="t('result.fieldRating')">{{ day.hotel.rating }}⭐</a-descriptions-item>
+                  <a-descriptions-item :label="t('result.fieldDistance')" :span="2">{{ day.hotel.distance }}</a-descriptions-item>
                 </a-descriptions>
               </a-card>
 
               <!-- 餐饮安排 -->
-              <a-divider orientation="left">🍽️ 餐饮安排</a-divider>
+              <a-divider orientation="left">{{ t('result.mealsTitle') }}</a-divider>
               <a-descriptions :column="1" bordered size="small">
                 <a-descriptions-item
                   v-for="meal in day.meals"
@@ -268,7 +268,7 @@
           </a-collapse>
         </a-card>
 
-        <a-card id="weather" v-if="tripPlan.weather_info && tripPlan.weather_info.length > 0" title="天气信息" style="margin-top: 20px" :bordered="false">
+        <a-card id="weather" v-if="tripPlan.weather_info && tripPlan.weather_info.length > 0" :title="t('result.weatherTitle')" style="margin-top: 20px" :bordered="false">
         <a-list
           :data-source="tripPlan.weather_info"
           :grid="{ gutter: 16, column: 3 }"
@@ -280,14 +280,14 @@
                 <div class="weather-info-row">
                   <span class="weather-icon">☀️</span>
                   <div>
-                    <div class="weather-label">白天</div>
+                    <div class="weather-label">{{ t('result.weatherDay') }}</div>
                     <div class="weather-value">{{ item.day_weather }} {{ item.day_temp }}°C</div>
                   </div>
                 </div>
                 <div class="weather-info-row">
                   <span class="weather-icon">🌙</span>
                   <div>
-                    <div class="weather-label">夜间</div>
+                    <div class="weather-label">{{ t('result.weatherNight') }}</div>
                     <div class="weather-value">{{ item.night_weather }} {{ item.night_temp }}°C</div>
                   </div>
                 </div>
@@ -302,14 +302,14 @@
       </div>
     </div>
 
-    <a-empty v-else description="没有找到旅行计划数据">
+    <a-empty v-else :description="t('result.noTripPlan')">
       <template #image>
         <div style="font-size: 80px;">🗺️</div>
       </template>
       <template #description>
-        <span style="color: #999;">暂无旅行计划数据,请先创建行程</span>
+        <span style="color: #999;">{{ t('result.noTripPlanDesc') }}</span>
       </template>
-      <a-button type="primary" @click="goBack">返回首页创建行程</a-button>
+      <a-button type="primary" @click="goBack">{{ t('result.backCreateTrip') }}</a-button>
     </a-empty>
 
     <!-- 回到顶部按钮 -->
@@ -321,21 +321,26 @@
 
     <!-- AI 聊天窗口 -->
     <div class="chat-toggle-btn" @click="chatOpen = !chatOpen" :class="{ active: chatOpen }">
-      🤖 AI 在线
+      {{ t('result.chat.toggle') }}
     </div>
     <transition name="chat-slide">
       <div v-show="chatOpen" class="chat-panel">
         <div class="chat-header">
-          <span>💬 行程智能问答</span>
+          <span>{{ t('result.chat.title') }}</span>
           <span class="chat-close" @click="chatOpen = false">✕</span>
         </div>
         <div class="chat-messages" ref="chatMessagesRef">
           <div v-if="chatHistory.length === 0" class="chat-empty">
-            👋 您好！我是旅途星辰AI，可以问我关于行程的任何问题，例如：
+            {{ t('result.chat.welcome') }}
             <div class="chat-suggestions">
-              <span class="chat-suggestion" @click="sendQuickQuestion('第一天的景点门票分别是多少钱？')">票价查询</span>
-              <span class="chat-suggestion" @click="sendQuickQuestion('这个行程适合老人吗？')">适合老人?</span>
-              <span class="chat-suggestion" @click="sendQuickQuestion('推荐的餐厅价格如何？')">餐饮价格</span>
+              <span
+                v-for="question in quickQuestions"
+                :key="question.labelKey"
+                class="chat-suggestion"
+                @click="sendQuickQuestion(t(question.questionKey))"
+              >
+                {{ t(question.labelKey) }}
+              </span>
             </div>
           </div>
           <div
@@ -356,12 +361,12 @@
           <input
             v-model="chatInput"
             class="chat-input"
-            placeholder="输入您关于行程的问题..."
+            :placeholder="t('result.chat.placeholder')"
             @keydown.enter="sendChatMessage"
             :disabled="chatLoading"
           />
           <button class="chat-send-btn" @click="sendChatMessage" :disabled="chatLoading || !chatInput.trim()">
-            发送
+            {{ t('result.chat.send') }}
           </button>
         </div>
       </div>
@@ -372,6 +377,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { DownOutlined } from '@ant-design/icons-vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
@@ -382,6 +388,7 @@ import axios from 'axios'
 import type { TripPlan, KnowledgeGraphData, GraphCategory, ChatMessage } from '@/types'
 
 const router = useRouter()
+const { t } = useI18n()
 const tripPlan = ref<TripPlan | null>(null)
 const editMode = ref(false)
 const originalPlan = ref<TripPlan | null>(null)
@@ -395,17 +402,76 @@ const graphData = ref<KnowledgeGraphData | null>(null)
 const graphCategories = ref<GraphCategory[]>([])
 let kgChart: echarts.ECharts | null = null
 
-const CATEGORY_COLORS: Record<string, string> = {
-  '城市': '#4A90D9',
-  '日程': '#5B8FF9',
-  '景点': '#5AD8A6',
-  '酒店': '#F6BD16',
-  '餐饮': '#E8684A',
-  '天气': '#6DC8EC',
-  '预算': '#FF9845',
-  '偏好/建议': '#B37FEB',
+const CATEGORY_KEY_MAP: Record<string, string> = {
+  '城市': 'city',
+  '都市': 'city',
+  'city': 'city',
+  '日程': 'schedule',
+  '行程': 'schedule',
+  'schedule': 'schedule',
+  '景点': 'attraction',
+  '観光地': 'attraction',
+  'attraction': 'attraction',
+  '酒店': 'hotel',
+  'ホテル': 'hotel',
+  'hotel': 'hotel',
+  '餐饮': 'meal',
+  '食事': 'meal',
+  'meal': 'meal',
+  '天气': 'weather',
+  '天気': 'weather',
+  'weather': 'weather',
+  '预算': 'budget',
+  '予算': 'budget',
+  'budget': 'budget',
+  '偏好/建议': 'suggestion',
+  '好み/提案': 'suggestion',
+  'preference/suggestion': 'suggestion',
 }
-const getCategoryColor = (name: string): string => CATEGORY_COLORS[name] || '#999'
+
+const CATEGORY_COLORS: Record<string, string> = {
+  city: '#4A90D9',
+  schedule: '#5B8FF9',
+  attraction: '#5AD8A6',
+  hotel: '#F6BD16',
+  meal: '#E8684A',
+  weather: '#6DC8EC',
+  budget: '#FF9845',
+  suggestion: '#B37FEB',
+}
+
+const normalizeCategoryKey = (name: string): string => {
+  const key = name.toLowerCase()
+  return CATEGORY_KEY_MAP[name] || CATEGORY_KEY_MAP[key] || name
+}
+
+const getCategoryColor = (name: string): string => {
+  const key = normalizeCategoryKey(name)
+  return CATEGORY_COLORS[key] || '#999'
+}
+
+const getCategoryLabel = (name: string): string => {
+  const key = normalizeCategoryKey(name)
+  if (key in CATEGORY_COLORS) {
+    return t(`result.graph.categories.${key}`)
+  }
+  return name
+}
+
+const quickQuestions = [
+  {
+    labelKey: 'result.chat.quickPriceLabel',
+    questionKey: 'result.chat.quickPriceQuestion',
+  },
+  {
+    labelKey: 'result.chat.quickSuitabilityLabel',
+    questionKey: 'result.chat.quickSuitabilityQuestion',
+  },
+  {
+    labelKey: 'result.chat.quickMealLabel',
+    questionKey: 'result.chat.quickMealQuestion',
+  },
+]
 
 // 聊天相关
 const chatOpen = ref(false)
@@ -447,11 +513,11 @@ const sendChatMessage = async () => {
     if (res.data.success) {
       chatHistory.value.push({ role: 'assistant', content: res.data.reply })
     } else {
-      chatHistory.value.push({ role: 'assistant', content: '抱歉，未能获取回复，请稍后再试 🙏' })
+      chatHistory.value.push({ role: 'assistant', content: t('result.chat.replyFallback') })
     }
   } catch (err) {
     console.error('Chat error:', err)
-    chatHistory.value.push({ role: 'assistant', content: '网络连接异常，请检查后端服务是否已启动 🔧' })
+    chatHistory.value.push({ role: 'assistant', content: t('result.chat.networkError') })
   } finally {
     chatLoading.value = false
     scrollChatToBottom()
@@ -503,7 +569,7 @@ const toggleEditMode = () => {
   editMode.value = true
   // 保存原始数据用于取消编辑
   originalPlan.value = JSON.parse(JSON.stringify(tripPlan.value))
-  message.info('进入编辑模式')
+  message.info(t('result.messages.enterEditMode'))
 }
 
 // 保存修改
@@ -513,7 +579,7 @@ const saveChanges = () => {
   if (tripPlan.value) {
     sessionStorage.setItem('tripPlan', JSON.stringify(tripPlan.value))
   }
-  message.success('修改已保存')
+  message.success(t('result.messages.changesSaved'))
 
   // 重新初始化地图以反映更改
   if (map) {
@@ -530,7 +596,7 @@ const cancelEdit = () => {
     tripPlan.value = JSON.parse(JSON.stringify(originalPlan.value))
   }
   editMode.value = false
-  message.info('已取消编辑')
+  message.info(t('result.messages.editCanceled'))
 }
 
 // 删除景点
@@ -539,12 +605,12 @@ const deleteAttraction = (dayIndex: number, attrIndex: number) => {
 
   const day = tripPlan.value.days[dayIndex]
   if (day.attractions.length <= 1) {
-    message.warning('每天至少需要保留一个景点')
+    message.warning(t('result.messages.keepOneAttraction'))
     return
   }
 
   day.attractions.splice(attrIndex, 1)
-  message.success('景点已删除')
+  message.success(t('result.messages.attractionDeleted'))
 }
 
 // 移动景点顺序
@@ -563,10 +629,10 @@ const moveAttraction = (dayIndex: number, attrIndex: number, direction: 'up' | '
 
 const getMealLabel = (type: string): string => {
   const labels: Record<string, string> = {
-    breakfast: '早餐',
-    lunch: '午餐',
-    dinner: '晚餐',
-    snack: '小吃'
+    breakfast: t('result.meals.breakfast'),
+    lunch: t('result.meals.lunch'),
+    dinner: t('result.meals.dinner'),
+    snack: t('result.meals.snack')
   }
   return labels[type] || type
 }
@@ -635,7 +701,8 @@ const getAttractionImage = (name: string, index: number): string => {
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement
   // 使用灰色占位图
-  img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect width="400" height="300" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="18" fill="%23999"%3E图片加载失败%3C/text%3E%3C/svg%3E'
+  const label = encodeURIComponent(t('result.imageLoadFailed'))
+  img.src = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect width="400" height="300" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="18" fill="%23999"%3E${label}%3C/text%3E%3C/svg%3E`
 }
 
 
@@ -643,14 +710,28 @@ const handleImageError = (event: Event) => {
 // ========== 构建导出用的纯净 HTML ==========
 const buildExportHTML = (): string => {
   if (!tripPlan.value) return ''
-  const tp = tripPlan.value
+  const tp = tripPlan.value as TripPlan & {
+    hotel_recommendations?: Array<{
+      name?: string
+      price?: number | string
+      address?: string
+    }>
+  }
+
+  const mealLabels: Record<string, string> = {
+    breakfast: t('result.meals.breakfast'),
+    lunch: t('result.meals.lunch'),
+    dinner: t('result.meals.dinner'),
+    snack: t('result.meals.snack'),
+  }
 
   // 每日行程 HTML
   let daysHTML = ''
-  tp.days.forEach((day, di) => {
+  tp.days.forEach((day) => {
     let attractionsHTML = ''
     day.attractions.forEach((a, ai) => {
       const photoUrl = attractionPhotos.value[a.name] || ''
+      const durationText = t('result.export.durationLine', { duration: a.visit_duration || '—' })
       const imgTag = photoUrl
         ? `<img src="${photoUrl}" style="width:100%;height:160px;object-fit:cover;border-radius:8px;margin-bottom:8px;" crossorigin="anonymous" />`
         : `<div style="width:100%;height:80px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:bold;">${a.name}</div>`
@@ -659,7 +740,7 @@ const buildExportHTML = (): string => {
           ${imgTag}
           <h4 style="margin:0 0 6px;font-size:15px;color:#1a1a1a;">${ai + 1}. ${a.name}</h4>
           <p style="margin:2px 0;font-size:12px;color:#555;">📍 ${a.address || '—'}</p>
-          <p style="margin:2px 0;font-size:12px;color:#555;">⏱ 游览 ${a.visit_duration || '—'} 分钟${a.ticket_price ? `  |  🎫 ¥${a.ticket_price}` : ''}</p>
+          <p style="margin:2px 0;font-size:12px;color:#555;">${durationText}${a.ticket_price ? `  |  🎫 ¥${a.ticket_price}` : ''}</p>
           <p style="margin:4px 0;font-size:12px;color:#666;">${a.description || ''}</p>
         </div>`
     })
@@ -667,17 +748,16 @@ const buildExportHTML = (): string => {
     // 餐饮推荐
     let mealsHTML = ''
     if (day.meals && day.meals.length) {
-      const mealLabels: Record<string, string> = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '小吃' }
-      mealsHTML = '<div style="margin-top:10px;"><strong style="color:#333;">🍽 餐饮推荐</strong><div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;">'
+      mealsHTML = `<div style="margin-top:10px;"><strong style="color:#333;">${t('result.export.mealTitle')}</strong><div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;">`
       day.meals.forEach(m => {
-        mealsHTML += `<div style="background:#fffbe6;padding:8px 14px;border-radius:8px;font-size:12px;color:#333;"><b>${mealLabels[m.type] || m.type}</b>: ${m.name || '暂无推荐'}${m.estimated_cost ? ` (约¥${m.estimated_cost})` : ''}</div>`
+        mealsHTML += `<div style="background:#fffbe6;padding:8px 14px;border-radius:8px;font-size:12px;color:#333;"><b>${mealLabels[m.type] || m.type}</b>: ${m.name || t('result.export.noMealRecommendation')}${m.estimated_cost ? ` (¥${m.estimated_cost})` : ''}</div>`
       })
       mealsHTML += '</div></div>'
     }
 
     daysHTML += `
       <div style="background:#ffffff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,0.06);">
-        <h3 style="margin:0 0 14px;color:#667eea;font-size:18px;">📅 第${day.day_index + 1}天 <span style="font-size:14px;color:#888;margin-left:8px;">${day.date || ''}</span></h3>
+        <h3 style="margin:0 0 14px;color:#667eea;font-size:18px;">${t('result.export.dayTitle', { day: day.day_index + 1 })} <span style="font-size:14px;color:#888;margin-left:8px;">${day.date || ''}</span></h3>
         <div style="display:flex;flex-wrap:wrap;gap:12px;">
           ${attractionsHTML}
         </div>
@@ -691,23 +771,23 @@ const buildExportHTML = (): string => {
     const b = tp.budget
     budgetHTML = `
       <div style="background:#ffffff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,0.06);">
-        <h3 style="margin:0 0 14px;color:#667eea;">💰 预算明细</h3>
+        <h3 style="margin:0 0 14px;color:#667eea;">${t('result.budget.title')}</h3>
         <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
           <div style="flex:1;min-width:120px;background:#f5f7fa;padding:14px;border-radius:10px;text-align:center;">
-            <div style="font-size:12px;color:#888;">景点门票</div><div style="font-size:20px;font-weight:bold;color:#333;">¥${b.total_attractions || 0}</div>
+            <div style="font-size:12px;color:#888;">${t('result.budget.attraction')}</div><div style="font-size:20px;font-weight:bold;color:#333;">¥${b.total_attractions || 0}</div>
           </div>
           <div style="flex:1;min-width:120px;background:#f5f7fa;padding:14px;border-radius:10px;text-align:center;">
-            <div style="font-size:12px;color:#888;">酒店住宿</div><div style="font-size:20px;font-weight:bold;color:#333;">¥${b.total_hotels || 0}</div>
+            <div style="font-size:12px;color:#888;">${t('result.budget.hotel')}</div><div style="font-size:20px;font-weight:bold;color:#333;">¥${b.total_hotels || 0}</div>
           </div>
           <div style="flex:1;min-width:120px;background:#f5f7fa;padding:14px;border-radius:10px;text-align:center;">
-            <div style="font-size:12px;color:#888;">餐饮费用</div><div style="font-size:20px;font-weight:bold;color:#333;">¥${b.total_meals || 0}</div>
+            <div style="font-size:12px;color:#888;">${t('result.budget.meal')}</div><div style="font-size:20px;font-weight:bold;color:#333;">¥${b.total_meals || 0}</div>
           </div>
           <div style="flex:1;min-width:120px;background:#f5f7fa;padding:14px;border-radius:10px;text-align:center;">
-            <div style="font-size:12px;color:#888;">交通费用</div><div style="font-size:20px;font-weight:bold;color:#333;">¥${b.total_transportation || 0}</div>
+            <div style="font-size:12px;color:#888;">${t('result.budget.transport')}</div><div style="font-size:20px;font-weight:bold;color:#333;">¥${b.total_transportation || 0}</div>
           </div>
         </div>
         <div style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:16px 20px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:16px;">预估总费用</span>
+          <span style="font-size:16px;">${t('result.budget.total')}</span>
           <span style="font-size:26px;font-weight:bold;">¥${b.total || 0}</span>
         </div>
       </div>`
@@ -725,14 +805,14 @@ const buildExportHTML = (): string => {
             <div style="display:flex;align-items:center;margin-bottom:10px;">
               <span style="font-size:24px;margin-right:12px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2));">☀️</span>
               <div style="line-height:1.2;">
-                <div style="font-size:12px;color:#99b0c9;margin-bottom:2px;">白天</div>
+                <div style="font-size:12px;color:#99b0c9;margin-bottom:2px;">${t('result.export.daytime')}</div>
                 <div style="font-size:14px;color:#fff;font-weight:600;">${w.day_weather} ${w.day_temp}°C</div>
               </div>
             </div>
             <div style="display:flex;align-items:center;margin-bottom:12px;">
               <span style="font-size:24px;margin-right:12px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2));">🌙</span>
               <div style="line-height:1.2;">
-                <div style="font-size:12px;color:#99b0c9;margin-bottom:2px;">夜间</div>
+                <div style="font-size:12px;color:#99b0c9;margin-bottom:2px;">${t('result.export.nighttime')}</div>
                 <div style="font-size:14px;color:#fff;font-weight:600;">${w.night_weather} ${w.night_temp}°C</div>
               </div>
             </div>
@@ -743,7 +823,7 @@ const buildExportHTML = (): string => {
       })
       weatherHTML = `
         <div style="background:#ffffff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,0.06);">
-          <h3 style="margin:0 0 14px;color:#667eea;">🌤 天气信息</h3>
+          <h3 style="margin:0 0 14px;color:#667eea;">${t('result.export.weatherTitle')}</h3>
           <div style="display:flex;flex-wrap:wrap;gap:10px;">
             ${weatherCards}
           </div>
@@ -751,7 +831,7 @@ const buildExportHTML = (): string => {
     } else {
       weatherHTML = `
         <div style="background:#ffffff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,0.06);">
-          <h3 style="margin:0 0 10px;color:#667eea;">🌤 天气信息</h3>
+          <h3 style="margin:0 0 10px;color:#667eea;">${t('result.export.weatherTitle')}</h3>
           <p style="font-size:14px;color:#333;line-height:1.8;">${typeof tp.weather_info === 'string' ? tp.weather_info : JSON.stringify(tp.weather_info)}</p>
         </div>`
     }
@@ -761,16 +841,16 @@ const buildExportHTML = (): string => {
   let hotelHTML = ''
   if (tp.hotel_recommendations && tp.hotel_recommendations.length) {
     let hotelItems = ''
-    tp.hotel_recommendations.forEach(h => {
+    tp.hotel_recommendations.forEach((h) => {
       hotelItems += `<div style="background:#e3f2fd;padding:12px 16px;border-radius:10px;margin-bottom:8px;">
-        <b style="color:#1565c0;">${h.name || '推荐酒店'}</b>
-        ${h.price ? `<span style="float:right;color:#e65100;font-weight:bold;">¥${h.price}/晚</span>` : ''}
+        <b style="color:#1565c0;">${h.name || t('result.export.hotelFallback')}</b>
+        ${h.price ? `<span style="float:right;color:#e65100;font-weight:bold;">¥${h.price}${t('result.export.perNight')}</span>` : ''}
         ${h.address ? `<p style="margin:4px 0 0;font-size:12px;color:#555;">📍 ${h.address}</p>` : ''}
       </div>`
     })
     hotelHTML = `
       <div style="background:#ffffff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,0.06);">
-        <h3 style="margin:0 0 14px;color:#1976d2;">🏨 酒店推荐</h3>
+        <h3 style="margin:0 0 14px;color:#1976d2;">${t('result.hotelTitle')}</h3>
         ${hotelItems}
       </div>`
   }
@@ -778,22 +858,26 @@ const buildExportHTML = (): string => {
   return `
     <div style="width:800px;padding:30px;background:#f0f2f5;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;color:#333;">
       <div style="text-align:center;margin-bottom:24px;">
-        <h1 style="margin:0;font-size:28px;color:#333;">🌟 ${tp.city} 旅行计划</h1>
-        <p style="margin:6px 0 0;font-size:14px;color:#888;">📅 ${tp.start_date || ''} 至 ${tp.end_date || ''} · ${tp.days?.length || ''}天行程</p>
+        <h1 style="margin:0;font-size:28px;color:#333;">${t('result.export.title', { city: tp.city })}</h1>
+        <p style="margin:6px 0 0;font-size:14px;color:#888;">${t('result.export.subtitle', {
+          start: tp.start_date || '',
+          end: tp.end_date || '',
+          days: tp.days?.length || 0,
+        })}</p>
         ${tp.overall_suggestions ? `<p style="margin:8px auto 0;max-width:600px;font-size:13px;color:#666;line-height:1.6;">💡 ${tp.overall_suggestions}</p>` : ''}
       </div>
       ${budgetHTML}
       ${daysHTML}
       ${hotelHTML}
       ${weatherHTML}
-      <div style="text-align:center;padding:16px;color:#aaa;font-size:12px;">由 旅途星辰 TripStar · AI旅行引擎 生成</div>
+      <div style="text-align:center;padding:16px;color:#aaa;font-size:12px;">${t('result.export.footer')}</div>
     </div>`
 }
 
 // 导出为图片
 const exportAsImage = async () => {
   try {
-    message.loading({ content: '正在生成图片...', key: 'export', duration: 0 })
+    message.loading({ content: t('result.messages.generatingImage'), key: 'export', duration: 0 })
 
     const exportContainer = document.createElement('div')
     exportContainer.innerHTML = buildExportHTML()
@@ -812,21 +896,21 @@ const exportAsImage = async () => {
     document.body.removeChild(exportContainer)
 
     const link = document.createElement('a')
-    link.download = `旅行计划_${tripPlan.value?.city}_${new Date().getTime()}.png`
+    link.download = `${t('result.export.filePrefix')}_${tripPlan.value?.city}_${new Date().getTime()}.png`
     link.href = canvas.toDataURL('image/png')
     link.click()
 
-    message.success({ content: '图片导出成功!', key: 'export' })
+    message.success({ content: t('result.messages.imageSuccess'), key: 'export' })
   } catch (error: any) {
     console.error('导出图片失败:', error)
-    message.error({ content: `导出图片失败: ${error.message}`, key: 'export' })
+    message.error({ content: t('result.messages.imageFailed', { error: error.message }), key: 'export' })
   }
 }
 
 // 导出为PDF
 const exportAsPDF = async () => {
   try {
-    message.loading({ content: '正在生成PDF...', key: 'export', duration: 0 })
+    message.loading({ content: t('result.messages.generatingPdf'), key: 'export', duration: 0 })
 
     const exportContainer = document.createElement('div')
     exportContainer.innerHTML = buildExportHTML()
@@ -867,12 +951,12 @@ const exportAsPDF = async () => {
       heightLeft -= 297
     }
 
-    pdf.save(`旅行计划_${tripPlan.value?.city}_${new Date().getTime()}.pdf`)
+    pdf.save(`${t('result.export.filePrefix')}_${tripPlan.value?.city}_${new Date().getTime()}.pdf`)
 
-    message.success({ content: 'PDF导出成功!', key: 'export' })
+    message.success({ content: t('result.messages.pdfSuccess'), key: 'export' })
   } catch (error: any) {
     console.error('导出PDF失败:', error)
-    message.error({ content: `导出PDF失败: ${error.message}`, key: 'export' })
+    message.error({ content: t('result.messages.pdfFailed', { error: error.message }), key: 'export' })
   }
 }
 // ========== 知识图谱初始化 ==========
@@ -900,16 +984,17 @@ const initKnowledgeGraph = () => {
       textStyle: { color: '#fff', fontSize: 13 },
       formatter: (params: any) => {
         if (params.dataType === 'node') {
-          const cat = graphData.value?.categories[params.data.category]?.name || ''
+          const catName = graphData.value?.categories[params.data.category]?.name || ''
+          const cat = getCategoryLabel(catName)
           let tip = `<b style="color:#FFD699;font-size:15px">${params.data.name}</b><br/>`
-          tip += `<span style="color:#aaa">类型：</span>${cat}<br/>`
+          tip += `<span style="color:#aaa">${t('result.graph.type')}:</span>${cat}<br/>`
           if (params.data.value) {
-            tip += `<span style="color:#aaa">详情：</span>${params.data.value}`
+            tip += `<span style="color:#aaa">${t('result.graph.detail')}:</span>${params.data.value}`
           }
           return tip
         }
         if (params.dataType === 'edge') {
-          return `<span style="color:#FFD699">${params.data.label || '关联'}</span>`
+          return `<span style="color:#FFD699">${params.data.label || t('result.graph.relation')}</span>`
         }
         return ''
       }
@@ -998,10 +1083,10 @@ const initMap = async () => {
     // 添加景点标记
     addAttractionMarkers(AMap)
 
-    message.success('地图加载成功')
+    message.success(t('result.messages.mapLoaded'))
   } catch (error) {
     console.error('地图加载失败:', error)
-    message.error('地图加载失败')
+    message.error(t('result.messages.mapLoadFailed'))
   }
 }
 
@@ -1044,10 +1129,10 @@ const addAttractionMarkers = (AMap: any) => {
       content: `
         <div style="padding: 10px; color: #333;">
           <h4 style="margin: 0 0 8px 0; color: #1a1a1a;">${attraction.name}</h4>
-          <p style="margin: 4px 0;"><strong>地址:</strong> ${attraction.address}</p>
-          <p style="margin: 4px 0;"><strong>游览时长:</strong> ${attraction.visit_duration}分钟</p>
-          <p style="margin: 4px 0;"><strong>描述:</strong> ${attraction.description}</p>
-          <p style="margin: 4px 0; color: #1890ff;"><strong>第${attraction.dayIndex + 1}天 景点${attraction.attrIndex + 1}</strong></p>
+          <p style="margin: 4px 0;"><strong>${t('result.fieldAddress')}:</strong> ${attraction.address}</p>
+          <p style="margin: 4px 0;"><strong>${t('result.fieldVisitDuration')}:</strong> ${attraction.visit_duration}${t('result.minuteUnit')}</p>
+          <p style="margin: 4px 0;"><strong>${t('result.fieldDescription')}:</strong> ${attraction.description}</p>
+          <p style="margin: 4px 0; color: #1890ff;"><strong>${t('result.mapInfo.dayAttraction', { day: attraction.dayIndex + 1, index: attraction.attrIndex + 1 })}</strong></p>
         </div>
       `,
       offset: new AMap.Pixel(0, -30)

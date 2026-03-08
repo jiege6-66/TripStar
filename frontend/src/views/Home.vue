@@ -16,13 +16,13 @@
       <div class="hero-section">
         <div class="hero-badge">
           <span class="hero-badge-icon">✨</span>
-          <span>AI 智能行程规划引擎</span>
+          <span>{{ t('home.heroBadge') }}</span>
         </div>
         <h1 class="hero-title">
-          <span class="title-line">探索世界的</span>
-          <span class="title-line title-accent">每一种可能</span>
+          <span class="title-line">{{ t('home.titleLine1') }}</span>
+          <span class="title-line title-accent">{{ t('home.titleLine2') }}</span>
         </h1>
-        <p class="hero-desc">告诉我你的目的地与偏好，AI 将为你定制一份独一无二的旅程方案</p>
+        <p class="hero-desc">{{ t('home.heroDesc') }}</p>
       </div>
 
       <!-- 表单主体 — 玻璃拟态卡片 -->
@@ -36,56 +36,56 @@
           <div class="step-section">
             <div class="step-indicator">
               <span class="step-num">01</span>
-              <span class="step-label">目的地与日期</span>
+              <span class="step-label">{{ t('home.step1') }}</span>
               <div class="step-line"></div>
             </div>
 
             <div class="fields-grid fields-4">
-              <a-form-item name="city" :rules="[{ required: true, message: '请输入目的地城市' }]">
+              <a-form-item name="city" :rules="formRules.city">
                 <template #label>
-                  <span class="field-label">🏙️ 目的地城市</span>
+                  <span class="field-label">{{ t('home.cityLabel') }}</span>
                 </template>
                 <a-input
                   v-model:value="formData.city"
-                  placeholder="输入城市名称，例如：杭州"
+                  :placeholder="t('home.cityPlaceholder')"
                   size="large"
                   class="dark-input"
                 />
               </a-form-item>
 
-              <a-form-item name="start_date" :rules="[{ required: true, message: '请选择开始日期' }]">
+              <a-form-item name="start_date" :rules="formRules.startDate">
                 <template #label>
-                  <span class="field-label">📅 出发日期</span>
+                  <span class="field-label">{{ t('home.startDateLabel') }}</span>
                 </template>
                 <a-date-picker
                   v-model:value="formData.start_date"
                   style="width: 100%"
                   size="large"
                   class="dark-input"
-                  placeholder="选择出发日"
+                  :placeholder="t('home.startDatePlaceholder')"
                 />
               </a-form-item>
 
-              <a-form-item name="end_date" :rules="[{ required: true, message: '请选择结束日期' }]">
+              <a-form-item name="end_date" :rules="formRules.endDate">
                 <template #label>
-                  <span class="field-label">📅 返程日期</span>
+                  <span class="field-label">{{ t('home.endDateLabel') }}</span>
                 </template>
                 <a-date-picker
                   v-model:value="formData.end_date"
                   style="width: 100%"
                   size="large"
                   class="dark-input"
-                  placeholder="选择返程日"
+                  :placeholder="t('home.endDatePlaceholder')"
                 />
               </a-form-item>
 
               <a-form-item>
                 <template #label>
-                  <span class="field-label">🗓️ 旅行天数</span>
+                  <span class="field-label">{{ t('home.travelDaysLabel') }}</span>
                 </template>
                 <div class="days-chip">
                   <span class="days-number">{{ formData.travel_days }}</span>
-                  <span class="days-text">天</span>
+                  <span class="days-text">{{ t('home.travelDaysUnit') }}</span>
                 </div>
               </a-form-item>
             </div>
@@ -95,39 +95,39 @@
           <div class="step-section">
             <div class="step-indicator">
               <span class="step-num">02</span>
-              <span class="step-label">偏好设置</span>
+              <span class="step-label">{{ t('home.step2') }}</span>
               <div class="step-line"></div>
             </div>
 
             <div class="fields-grid fields-2">
               <a-form-item name="transportation">
                 <template #label>
-                  <span class="field-label">🚀 交通方式</span>
+                  <span class="field-label">{{ t('home.transportationLabel') }}</span>
                 </template>
                 <a-select v-model:value="formData.transportation" size="large" class="dark-select">
-                  <a-select-option value="公共交通">🚇 公共交通</a-select-option>
-                  <a-select-option value="自驾">🚗 自驾出行</a-select-option>
-                  <a-select-option value="步行">🚶 步行探索</a-select-option>
-                  <a-select-option value="混合">🔀 混合模式</a-select-option>
+                  <a-select-option value="公共交通">{{ t('home.transportation.public') }}</a-select-option>
+                  <a-select-option value="自驾">{{ t('home.transportation.drive') }}</a-select-option>
+                  <a-select-option value="步行">{{ t('home.transportation.walk') }}</a-select-option>
+                  <a-select-option value="混合">{{ t('home.transportation.mixed') }}</a-select-option>
                 </a-select>
               </a-form-item>
 
               <a-form-item name="accommodation">
                 <template #label>
-                  <span class="field-label">🏨 住宿风格</span>
+                  <span class="field-label">{{ t('home.accommodationLabel') }}</span>
                 </template>
                 <a-select v-model:value="formData.accommodation" size="large" class="dark-select">
-                  <a-select-option value="经济型酒店">💰 经济实惠</a-select-option>
-                  <a-select-option value="舒适型酒店">🏨 舒适商务</a-select-option>
-                  <a-select-option value="豪华酒店">⭐ 奢华度假</a-select-option>
-                  <a-select-option value="民宿">🏡 特色民宿</a-select-option>
+                  <a-select-option value="经济型酒店">{{ t('home.accommodation.budget') }}</a-select-option>
+                  <a-select-option value="舒适型酒店">{{ t('home.accommodation.comfort') }}</a-select-option>
+                  <a-select-option value="豪华酒店">{{ t('home.accommodation.luxury') }}</a-select-option>
+                  <a-select-option value="民宿">{{ t('home.accommodation.homestay') }}</a-select-option>
                 </a-select>
               </a-form-item>
             </div>
 
             <a-form-item name="preferences">
               <template #label>
-                <span class="field-label">💫 旅行兴趣</span>
+                <span class="field-label">{{ t('home.interestsLabel') }}</span>
               </template>
               <div class="interest-grid">
                 <a-checkbox-group v-model:value="formData.preferences" class="interest-group">
@@ -139,7 +139,7 @@
                     @click.prevent="togglePreference(item.value)"
                   >
                     <span class="interest-icon">{{ item.icon }}</span>
-                    <span class="interest-name">{{ item.value }}</span>
+                    <span class="interest-name">{{ t(item.labelKey) }}</span>
                   </label>
                 </a-checkbox-group>
               </div>
@@ -150,14 +150,14 @@
           <div class="step-section">
             <div class="step-indicator">
               <span class="step-num">03</span>
-              <span class="step-label">特殊需求</span>
+              <span class="step-label">{{ t('home.step3') }}</span>
               <div class="step-line"></div>
             </div>
 
             <a-form-item name="free_text_input">
               <a-textarea
                 v-model:value="formData.free_text_input"
-                placeholder="告诉我你的特殊需求，比如：带老人出行、想看日出、对花粉过敏……"
+                :placeholder="t('home.specialNeedsPlaceholder')"
                 :rows="3"
                 size="large"
                 class="dark-textarea"
@@ -175,12 +175,12 @@
             >
               <span v-if="!loading" class="btn-content">
                 <span class="btn-icon">🚀</span>
-                <span>开始规划旅程</span>
+                <span>{{ t('home.submit') }}</span>
                 <span class="btn-arrow">→</span>
               </span>
               <span v-else class="btn-content">
                 <span class="btn-spinner"></span>
-                <span>AI 正在规划中…</span>
+                <span>{{ t('home.submitting') }}</span>
               </span>
             </button>
           </a-form-item>
@@ -199,28 +199,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { computed, ref, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { generateTripPlan } from '@/services/api'
 import type { TripFormData } from '@/types'
 import type { Dayjs } from 'dayjs'
 
 const router = useRouter()
+const { t } = useI18n()
 const loading = ref(false)
 const loadingProgress = ref(0)
 const loadingStatus = ref('')
 
 const interestOptions = [
-  { value: '历史文化', icon: '🏛️' },
-  { value: '自然风光', icon: '🏞️' },
-  { value: '美食', icon: '🍜' },
-  { value: '购物', icon: '🛍️' },
-  { value: '艺术', icon: '🎨' },
-  { value: '休闲', icon: '☕' },
+  { value: '历史文化', icon: '🏛️', labelKey: 'home.interests.history' },
+  { value: '自然风光', icon: '🏞️', labelKey: 'home.interests.nature' },
+  { value: '美食', icon: '🍜', labelKey: 'home.interests.food' },
+  { value: '购物', icon: '🛍️', labelKey: 'home.interests.shopping' },
+  { value: '艺术', icon: '🎨', labelKey: 'home.interests.art' },
+  { value: '休闲', icon: '☕', labelKey: 'home.interests.leisure' },
 ]
 
-const formData = reactive<TripFormData & { start_date: Dayjs | null; end_date: Dayjs | null }>({
+const formRules = computed(() => ({
+  city: [{ required: true, message: t('home.cityRequired') }],
+  startDate: [{ required: true, message: t('home.startDateRequired') }],
+  endDate: [{ required: true, message: t('home.endDateRequired') }],
+}))
+
+type HomeFormData = Omit<TripFormData, 'start_date' | 'end_date'> & {
+  start_date: Dayjs | null
+  end_date: Dayjs | null
+}
+
+const formData = reactive<HomeFormData>({
   city: '',
   start_date: null,
   end_date: null,
@@ -241,7 +254,7 @@ const togglePreference = (value: string) => {
 }
 
 // 星空粒子随机样式
-const starStyle = (n: number) => {
+const starStyle = (_n: number) => {
   const size = Math.random() * 3 + 1
   return {
     width: size + 'px',
@@ -260,10 +273,10 @@ watch([() => formData.start_date, () => formData.end_date], ([start, end]) => {
     if (days > 0 && days <= 30) {
       formData.travel_days = days
     } else if (days > 30) {
-      message.warning('旅行天数不能超过30天')
+      message.warning(t('home.messages.travelDaysTooLong'))
       formData.end_date = null
     } else {
-      message.warning('结束日期不能早于开始日期')
+      message.warning(t('home.messages.endDateEarlier'))
       formData.end_date = null
     }
   }
@@ -271,13 +284,13 @@ watch([() => formData.start_date, () => formData.end_date], ([start, end]) => {
 
 const handleSubmit = async () => {
   if (!formData.start_date || !formData.end_date) {
-    message.error('请选择日期')
+    message.error(t('home.messages.selectDate'))
     return
   }
 
   loading.value = true
   loadingProgress.value = 0
-  loadingStatus.value = '正在初始化...'
+  loadingStatus.value = t('home.loading.initializing')
 
   // 模拟进度更新
   const progressInterval = setInterval(() => {
@@ -286,13 +299,13 @@ const handleSubmit = async () => {
 
       // 更新状态文本
       if (loadingProgress.value <= 30) {
-        loadingStatus.value = '🔍 正在搜索景点...'
+        loadingStatus.value = t('home.loading.searchingAttractions')
       } else if (loadingProgress.value <= 50) {
-        loadingStatus.value = '🌤️ 正在查询天气...'
+        loadingStatus.value = t('home.loading.queryingWeather')
       } else if (loadingProgress.value <= 70) {
-        loadingStatus.value = '🏨 正在推荐酒店...'
+        loadingStatus.value = t('home.loading.recommendingHotels')
       } else {
-        loadingStatus.value = '📋 正在生成行程计划...'
+        loadingStatus.value = t('home.loading.generatingPlan')
       }
     }
   }, 500)
@@ -313,7 +326,7 @@ const handleSubmit = async () => {
 
     clearInterval(progressInterval)
     loadingProgress.value = 100
-    loadingStatus.value = '✅ 完成!'
+    loadingStatus.value = t('home.loading.done')
 
     if (response.success && response.data) {
       // 保存到sessionStorage
@@ -323,18 +336,18 @@ const handleSubmit = async () => {
         sessionStorage.setItem('graphData', JSON.stringify(response.graph_data))
       }
 
-      message.success('旅行计划生成成功!')
+      message.success(t('home.messages.generateSuccess'))
 
       // 短暂延迟后跳转
       setTimeout(() => {
         router.push('/result')
       }, 500)
     } else {
-      message.error(response.message || '生成失败')
+      message.error(response.message || t('home.messages.generateFailed'))
     }
   } catch (error: any) {
     clearInterval(progressInterval)
-    message.error(error.message || '生成旅行计划失败,请稍后重试')
+    message.error(error.message || t('home.messages.generateRetry'))
   } finally {
     setTimeout(() => {
       loading.value = false

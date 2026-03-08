@@ -1,7 +1,9 @@
 import axios from 'axios'
 import type { TripFormData, TripPlanResponse } from '@/types'
+import { i18n } from '@/i18n'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+const t = i18n.global.t
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -44,7 +46,7 @@ export async function submitTripPlan(formData: TripFormData): Promise<{ task_id:
     return response.data
   } catch (error: any) {
     console.error('提交旅行计划失败:', error)
-    throw new Error(error.response?.data?.detail || error.message || '提交旅行计划失败')
+    throw new Error(error.response?.data?.detail || error.message || t('api.submitTripPlanFailed'))
   }
 }
 
@@ -57,7 +59,7 @@ export async function pollTaskStatus(taskId: string): Promise<any> {
     return response.data
   } catch (error: any) {
     console.error('查询任务状态失败:', error)
-    throw new Error(error.response?.data?.detail || error.message || '查询任务状态失败')
+    throw new Error(error.response?.data?.detail || error.message || t('api.queryTaskStatusFailed'))
   }
 }
 
@@ -78,7 +80,7 @@ export async function generateTripPlan(formData: TripFormData): Promise<TripPlan
           resolve(status.result)
         } else if (status.status === 'failed') {
           clearInterval(interval)
-          reject(new Error(status.error || '生成旅行计划失败'))
+          reject(new Error(status.error || t('api.generateTripPlanFailed')))
         }
         // status === 'processing' → 继续轮询
       } catch (err) {
@@ -98,7 +100,7 @@ export async function healthCheck(): Promise<any> {
     return response.data
   } catch (error: any) {
     console.error('健康检查失败:', error)
-    throw new Error(error.message || '健康检查失败')
+    throw new Error(error.message || t('api.healthCheckFailed'))
   }
 }
 
