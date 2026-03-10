@@ -34,7 +34,7 @@
       <a-layout-content style="padding: 0">
         <router-view />
       </a-layout-content>
-      <a-layout-footer v-if="!isLandingRoute" class="app-footer">
+      <!-- <a-layout-footer v-if="!isLandingRoute" class="app-footer">
         <div class="footer-inner">
           <div class="footer-left">
             <span class="footer-brand">{{ t('app.footerBrand') }}</span>
@@ -44,7 +44,7 @@
             <span class="footer-tech">{{ t('app.footerTech') }}</span>
           </div>
         </div>
-      </a-layout-footer>
+      </a-layout-footer> -->
     </a-layout>
   </div>
 </template>
