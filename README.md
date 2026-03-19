@@ -4,7 +4,7 @@
 <img width="1418" height="619" alt="PixPin_2026-03-11_00-38-31" src="https://github.com/user-attachments/assets/43d55fdf-beb2-47ea-b4a0-219613524776" />
 <p align="center">
   <img src="https://img.shields.io/badge/license-GPL--2.0-orange">
-  <img src="https://img.shields.io/badge/version-v0.1.0-green">
+  <img src="https://img.shields.io/badge/version-v0.2.0-green">
   <img src="https://img.shields.io/badge/Docker-Build-blue?logo=docker">
   <img src="https://img.shields.io/badge/python-3.10+-blue.svg">
   <img src="https://img.shields.io/badge/vue-3.x-brightgreen.svg">
@@ -13,27 +13,28 @@
 
 > [!IMPORTANT]
 > 
-> 可直接魔撘平台使用已部署的项目：[旅途星辰 (TripStar) - AI 旅行智能体](https://modelscope.cn/studios/lcclxy/Journey-to-the-China)（暂时关闭）
+> 可直接体验项目，为避免拥挤建议自行部署：[旅途星辰 (TripStar) - AI 旅行智能体](https://modelscope.cn/studios/lcclxy/Journey-to-the-China)
 > 
-> 其中包括：旅行计划、景点地图、预算明细、每日行程：行程描述、交通方式、住宿推荐、景点安排（地址、游览时长、景点描述）、餐饮安排、天气信息、知识图谱可视化、沉浸式伴游 AI 问答......
+> 其中包括：旅行计划、景点地图概览、预算明细、每日行程：行程描述、交通方式、住宿推荐、景点安排（地址、游览时长、景点描述）、餐饮安排、天气信息、知识图谱可视化、沉浸式伴游 AI 问答......
 
 ## 项目简介
 
 **旅途星辰 (TripStar)** 是一个创新的 AI 文旅智能体应用，基于 HelloAgents 框架打造的多智能体协作文旅规划平台，旨在解决用户在规划旅行时面临的“信息过载”和“决策疲劳”问题。
 
-有别于传统的旅游攻略网站，本项目采用了基于 **大语言模型 (LLM)** 和 **多智能体 (Multi-Agent)** 协作架构的创新模式。它能像一位经验丰富的人类旅行管家一样，全面考虑用户的个性化需求（偏好设置：交通方式、住宿风格、旅行兴趣、特殊需求等），自动搜索旅行信息、查询当地天气、精选酒店并规划最优景点路线，最终输出一份结构化、可视化、可交互的高定旅行路书，**快速完成旅游攻略**。
+有别于传统的旅游攻略网站，本项目采用了基于 **大语言模型 (LLM)** 和 **多智能体 (Multi-Agent)** 协作架构的创新模式。它能像一位经验丰富的人类旅行管家一样，全面考虑用户的个性化需求（偏好设置：交通方式、住宿风格、旅行兴趣、特殊需求等），自动搜索旅行信息、查询当地天气、精选酒店并规划最优景点路线，以**快速完成旅游攻略**。
 
 ### 核心亮点
 
+* **多语言支持**: 深度集成 Vue I18n，系统界面及 AI 问答全程支持多语言无缝切换，为全球旅行者打造无障碍的行程规划体验。
+* **高定主题互动地图**: 深度集成高德地图 JS API 2.0，动态绘制“起点-景点-终点”的真实经纬度打卡路线，提供高级定制底图配色，一眼预览景点位置方便安排行程。
+* **精准预算明细面板**: 智能汇总门票、餐饮、住宿与交通等多维度花销账单，提供直观的财务面板报表，让出行预算尽在掌握。
 * **多智能体协作协同**: 采用分工明确的多个 Agent（如景点规划师、天气预报员、酒店推荐专家），通过工作流 (Workflow) 协同完成复杂的旅行规划任务。
-* **并发执行优化**: 将互不依赖的子任务（如搜索景点、查询天气、精选酒店）利用 `asyncio.gather` 进行并发执行，将响应时间从串行的 $T_1+T_2+T_3$ 大幅缩短至 $\max(T_1, T_2, T_3)$。
-* **知识图谱可视化**: 将生成的行程数据实时转换为节点关系图（基于 ECharts的力导向图），直观展示“城市-天数-行程节点-预算”的空间结构。
-* **沉浸式伴游 AI 问答**: 在生成报告后，提供悬浮式 AI 问答窗口。AI 拥有完整行程的上下文记忆，用户可随时针对行程细节（如票价、餐饮）进行追问。
-* **MCP 工具调用能力**: 深度集成 Model Context Protocol (MCP)，通过 `uvx amap-mcp-server` 实时调用高德地图 API，获取精准真实的地理和 POI 数据。
+* **知识图谱可视化**: 将生成的行程数据实时转换为节点关系图，直观展示“城市-天数-行程节点-预算”的空间结构。
+* **沉浸式伴游 AI 问答**: 在生成报告后，提供悬浮式 AI 问答窗口（左下角），AI 拥有完整行程的上下文记忆，用户可随时针对行程细节（如票价、适宜性）进行追问。
 * **奢华暗黑玻璃拟物风**: 全新设计的暗黑系玻璃拟物化 (Dark Luxury Glassmorphism) 界面，提供极具沉浸感的高级视觉体验。
 ---
-> 举个例子要去中国杭州玩耍，只需要填写地点、日期、偏好设置，即可等待行程规划的结果
-<img width="2733" height="1206" alt="PixPin_2026-03-11_00-36-25" src="https://github.com/user-attachments/assets/460dbe44-20ac-432f-a656-7ae707af7a78" />
+> 举个例子要去中国——洛阳（目前只支持国内）玩耍，只需要填写地点、日期、偏好设置，即可等待行程规划的结果，一眼预览如何安排景点相近的旅游攻略
+<img width="1234" height="564" alt="image" src="https://github.com/user-attachments/assets/76ea87ea-e9ed-4248-9f34-91394a0b5308" />
 
 
 ## 系统架构
@@ -63,7 +64,7 @@ graph TD
     end
 
     subgraph G4 ["服务层"]
-        D1["LLM模型API <br/> doubao-seed-1-8-251228/intern-latest"]
+        D1["LLM模型API <br/> doubao-seed-1-8-251228"]
         D2["高德 MCP Server <br/> 地理编码/POI搜索"]
         D3["天气/时间检索工具"]
     end
@@ -120,10 +121,10 @@ graph TD
 
 * Python 3.10+
 * Node.js 18+
-* 大模型 API Key（推荐使用兼容 OpenAI 格式的服务商，如阿里云百炼、书生浦语）
+* 大模型 API Key（推荐使用兼容 OpenAI 格式的服务商，如豆包、阿里云百炼）
 * 高德地图两种key： Web服务 、 Web端(JS API) (其**安全密钥 JSCode**配置在index.html中)（[高德api](https://lbs.amap.com/)）
 * 图片抓取api（[Unsplash API](https://unsplash.com/developers)）
-* 系统已安装 `uv` 包管理器（用于 MCP 环境隔离）。
+* 安装 `uv` 包管理器
 
 ### 1. 后端启动
 
@@ -131,12 +132,18 @@ graph TD
 # 进入后端主目录
 cd backend
 
+# 创建虚拟环境
+python -m venv venv
+
+# 激活虚拟环境
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
 # 安装项目依赖包
 pip install -r requirements.txt
 
 # 复制配置文件并填入相应的 API KEY
 cp .env.example .env
-# [必填] LLM_API_KEY, LLM_BASE_URL（以/v1结尾）, LLM_MODEL_ID（选择有结构化输出能力的模型）
+# [必填] LLM_API_KEY, LLM_BASE_URL, LLM_MODEL_ID（选择有结构化输出能力的模型）
 # [必填] VITE_AMAP_WEB_KEY (高德地图 web服务 类型的key)
 # [必填] Unsplash API Credentials（创建应用后的key）
 
@@ -144,7 +151,7 @@ cp .env.example .env
 uvicorn app.api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-API 启动后，您可以访问 `http://localhost:8000/docs` 查看 Swagger 互动文档。
+API 启动后，您可以访问 `http://localhost:8000/docs` 查看互动文档。
 
 ### 2. 前端启动
 
@@ -164,13 +171,7 @@ npm install
 npm run dev
 ```
 
-### 3. 生产环境 Docker / 魔撘社区快速部署
 
-本项目已经适配 **魔搭社区 (ModelScope)** 等云端编程式创空间，只需要将前后端env文件配置完成后，同时将ms_deploy.json和Dockerfile里面的key进行覆写，最后一步将整个文件放在魔撘平台创空间即可部署自己的服务啦。
-
-1. `Dockerfile`: 定义了由 Node 构建静态文件、Python 挂载启动的全栈二阶段构建镜像过程。已将 `uv` 和 `amap-mcp-server` 前置缓冲避免由于运行时下载造成的超时。
-2. `start.sh`: `gunicorn` + `uvicorn worker` 启动配置，推荐单 worker 运行以此避开异步轮询缓存击穿问题。
-3. 部署时，仅需将全部代码推入魔搭空间，配置同名环境变量参数，系统即可全自动化接管。
 
 ---
 
@@ -194,17 +195,16 @@ helloagents-trip-planner-new/
 │   ├── index.html                 # 入口挂载及高德地图 SecurityKey 预设
 │   └── package.json
 │
-├── ms_deploy.json                 # 魔搭创空间专属容器定义描述符
 ├── Dockerfile                     # 通用生产发布容器脚本
 └── README.md
 ```
 
-> 下面是部分运行结果，丰富的功能探索ing，欢迎大家提issues
+> 下面是部分运行结果，丰富的功能探索中...
 
-<img width="500" height="1818" alt="旅行计划_杭州_1772887217932" src="https://github.com/user-attachments/assets/ced55dae-e03e-433a-af9d-9f3c26d34563" />
+<img width="1720" height="754" alt="image" src="https://github.com/user-attachments/assets/e7189304-f17e-43ee-8f62-4c3170de6025" />
 
-## 后续可扩展方向 (Roadmap)
+## 后续可扩展方向
 
-1. **配置goole地图服务**: 当前依赖高德地图的mcp服务，偶尔会出现调用失败的问题，后续转为goole相关服务，进行景点搜索和酒店搜索等。
+1. **配置goole地图服务**: 当前依赖高德地图的mcp服务，为达到全球使用的效果，后续转为goole相关服务。
 2. **小红书mcp的适配**: 针对景点的相关推荐，计划调用小红书mcp进行搜索，完善景点推荐流。
 3. **计划导入功能**: 针对生成计划导出功能添加json，并添加计划导入模块，方便查看之前生成的计划并进行修改。
