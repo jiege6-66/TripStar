@@ -136,7 +136,7 @@ cd backend
 python -m venv venv
 
 # 激活虚拟环境
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source .venv/bin/activate  # Windows: venv\Scripts\activate
 
 # 安装项目依赖包
 pip install -r requirements.txt
