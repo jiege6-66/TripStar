@@ -4,8 +4,19 @@
  * 更新日期: 2026-03
  */
 
-// 必须先加载crypto-js
-var CryptoJs = require("crypto-js");
+// 优先使用 crypto-js，缺失时回退 Node 内置 crypto（避免部署环境缺包直接崩溃）
+var CryptoJs = null;
+var NodeCrypto = null;
+try {
+    CryptoJs = require("crypto-js");
+} catch (e) {
+    CryptoJs = null;
+}
+try {
+    NodeCrypto = require("crypto");
+} catch (e) {
+    NodeCrypto = null;
+}
 
 // 加载补环境（包含mnsv2函数）
 
@@ -318,7 +329,13 @@ function b64Encode(e) {
 }
 
 function MD5(e) {
-    return CryptoJs.MD5(e).toString();
+    if (CryptoJs && CryptoJs.MD5) {
+        return CryptoJs.MD5(e).toString();
+    }
+    if (NodeCrypto) {
+        return NodeCrypto.createHash("md5").update(String(e), "utf8").digest("hex");
+    }
+    throw new Error("MD5 runtime unavailable: crypto-js and node:crypto are both missing");
 }
 
 /**

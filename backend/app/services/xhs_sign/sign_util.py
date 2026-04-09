@@ -9,14 +9,25 @@ import math
 import random
 import os
 import execjs
+from execjs._misc import encode_unicode_codepoints
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+os.environ['LANG'] = 'zh_CN.UTF-8'
 
 # ---------- JS 运行时初始化 ----------
 _SIGN_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
+def _compile_js(js_code: str):
+    """
+    将 JS 源码中的非 ASCII 字符转义为 \\uXXXX，避免 Windows 上 stdin 管道
+    按系统代码页（例如 cp932）写入时触发 UnicodeEncodeError。
+    """
+    return execjs.compile(encode_unicode_codepoints(js_code))
+
 # 加载核心签名 JS（生成 x-s / x-t / x-s-common）
 _xs_js_path = os.path.join(_SIGN_DIR, "xhs_xs_xsc_56.js")
 with open(_xs_js_path, "r", encoding="utf-8") as f:
-    _xs_js = execjs.compile(f.read())
+    _xs_js = _compile_js(f.read())
 
 # 加载 xray traceid JS
 _xray_js_path = os.path.join(_SIGN_DIR, "xhs_xray.js")
@@ -31,9 +42,9 @@ _xray_js_code = re.sub(r"require\(['\"].*?xhs_xray_pack[12]\.js['\"]\)",
                        lambda m: f"require('{_pack1_path}')" if "pack1" in m.group(0) else f"require('{_pack2_path}')", 
                        _xray_js_code)
 
-_xray_js = execjs.compile(_xray_js_code)
+_xray_js = _compile_js(_xray_js_code)
 
-print("✅ [XHS_SIGN] 签名 JS 引擎加载成功")
+print("[XHS_SIGN] signature JS engine loaded")
 
 
 # ---------- Cookie 工具 ----------
