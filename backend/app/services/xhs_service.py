@@ -364,7 +364,7 @@ def get_xhs_photo_sync(keyword: str) -> str:
         client = get_xhs_client()
 
         # 搜图时强制按"最新"排序，避开综合高赞的含文字攻略图
-        res_json = client.search_notes(keyword=keyword, sort_type=1)
+        res_json = client.search_notes(keyword=keyword, sort_type=0)
         items = res_json.get("data", {}).get("items", [])
 
         target_note_id = None

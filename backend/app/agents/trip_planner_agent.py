@@ -311,17 +311,14 @@ class MultiAgentTripPlanner:
             # ========== 串行阶段: 步骤4 整合生成 ==========
             print("📋 步骤4: 生成行程计划...")
             await self._emit_progress(progress_callback, "planning", "正在生成旅行计划...", 85)
-            attraction_context = self._prepare_planner_context("attractions", attraction_response)
-            weather_context = self._prepare_planner_context("weather", weather_response)
-            hotel_context = self._prepare_planner_context("hotels", hotel_response)
             print(
-                f"🧾 规划上下文长度: 景点={len(attraction_context)} 天气={len(weather_context)} 酒店={len(hotel_context)}"
+                f"🧾 规划上下文长度: 景点={len(attraction_response)} 天气={len(weather_response)} 酒店={len(hotel_response)}"
             )
             planner_response = await self._run_planner_with_retry(
                 request,
-                attraction_context,
-                weather_context,
-                hotel_context,
+                attraction_response,
+                weather_response,
+                hotel_response,
             )
             print(f"行程规划结果: {planner_response[:300]}...\n")
 
@@ -353,43 +350,6 @@ class MultiAgentTripPlanner:
         query = f"请使用amap_maps_text_search工具搜索{request.city}的{keywords}相关的景点。\n非常重要：你必须直接输出 `[TOOL_CALL:amap_maps_text_search:keywords={keywords},city={request.city}]`，不要附带任何多余的 JSON 或文字说明！"
         return query
 
-    def _prepare_planner_context(self, category: str, text: str) -> str:
-        """压缩上下文，避免把冗长失败提示和超长文本直接塞给规划模型。"""
-        limits = {
-            "attractions": 2400,
-            "weather": 600,
-            "hotels": 900,
-        }
-        fallbacks = {
-            "attractions": "景点信息有限。请仅基于当前已知热门景点生成稳妥行程，不要虚构偏门景点。",
-            "weather": "天气信息暂未成功获取。请提供室内/室外可替换方案，并提醒用户出发前再次查看实时天气。",
-            "hotels": "酒店检索暂未成功获取。请根据用户住宿偏好与主要景点分布，给出交通便利商圈的住宿建议，并明确属于备选方案。",
-        }
-        failure_markers = (
-            "未找到工具",
-            "工具调用失败",
-            "查询失败",
-            "暂时无法",
-            "Request timed out",
-            "system cpu overloaded",
-        )
-
-        normalized = (text or "").strip()
-        if not normalized:
-            return fallbacks[category]
-
-        if any(marker in normalized for marker in failure_markers):
-            return fallbacks[category]
-
-        if category == "attractions" and normalized.startswith("这是小红书热门精选游记的提取结果"):
-            lines = [line for line in normalized.splitlines() if line.strip()]
-            normalized = "\n".join(lines[:7])
-
-        limit = limits[category]
-        if len(normalized) > limit:
-            normalized = normalized[:limit].rstrip() + "\n...(上下文已截断)"
-
-        return normalized
 
     async def _run_planner_with_retry(
         self,
@@ -398,9 +358,8 @@ class MultiAgentTripPlanner:
         weather: str,
         hotels: str,
     ) -> str:
-        """规划阶段使用更长超时，并在超时后用更精简的上下文再试一次。"""
+        """规划阶段使用更长超时，并在超时后重试一次。"""
         timeout = int(os.getenv("TRIP_PLANNER_TIMEOUT", "180"))
-        max_tokens = int(os.getenv("TRIP_PLANNER_MAX_TOKENS", "2200"))
         planner_query = self._build_planner_query(request, attractions, weather, hotels)
 
         try:
@@ -409,30 +368,22 @@ class MultiAgentTripPlanner:
                 planner_query,
                 timeout=timeout,
                 temperature=0.2,
-                max_tokens=max_tokens,
             )
         except Exception as exc:
             err_text = str(exc).lower()
             if "timeout" not in err_text and "timed out" not in err_text:
                 raise
 
-            print("⚠️  首次行程规划超时，正在使用精简上下文重试一次...")
-            compact_query = self._build_planner_query(
-                request,
-                self._prepare_planner_context("attractions", attractions[:1200]),
-                self._prepare_planner_context("weather", weather[:300]),
-                self._prepare_planner_context("hotels", hotels[:450]),
-            )
-            compact_query += (
+            print("⚠️  首次行程规划超时，正在重试一次...")
+            planner_query += (
                 "\n\n**补充要求:** 如果部分辅助信息不足，请使用保守、常见、可执行的建议补齐，"
                 "但必须输出完整合法的 JSON，不要输出解释性文字。"
             )
             return await asyncio.to_thread(
                 self.planner_agent.run,
-                compact_query,
+                planner_query,
                 timeout=timeout,
                 temperature=0.2,
-                max_tokens=min(max_tokens, 1800),
             )
 
     def _build_planner_query(self, request: TripRequest, attractions: str, weather: str, hotels: str = "") -> str:
@@ -566,6 +517,136 @@ class MultiAgentTripPlanner:
         
         return ''.join(result)
 
+    def _repair_truncated_json(self, json_str: str) -> str:
+        """修复被 max_tokens 截断的不完整 JSON。
+
+        策略：
+        1. 如果最后一个字符在字符串值内部，先关闭该字符串。
+        2. 移除最后一个不完整的键值对（trailing comma 之后的碎片）。
+        3. 根据打开/关闭的括号差额，补齐缺失的 ] 和 }。
+        """
+        import re as _re
+
+        s = json_str.rstrip()
+        if not s:
+            return s
+
+        # --- Step 1: 关闭未终止的字符串 ---
+        in_str = False
+        escape = False
+        for ch in s:
+            if escape:
+                escape = False
+                continue
+            if ch == '\\':
+                escape = True
+                continue
+            if ch == '"':
+                in_str = not in_str
+        if in_str:
+            # 去掉尾部可能的碎片转义符
+            s = s.rstrip('\\')
+            s += '"'
+
+        # --- Step 2: 移除尾部不完整的键值对碎片 ---
+        # 常见模式: 值字符串闭合后紧跟着换行但后面没有逗号/括号
+        # 或者尾部是 "key": 但缺少值
+        # 尝试反复去除尾部碎片直到以合法的 JSON 结构字符结尾
+        for _ in range(10):
+            stripped = s.rstrip()
+            if not stripped:
+                break
+            last = stripped[-1]
+            if last in ('}', ']', '"', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                        'e', 'l', 's'):
+                # 'e' for true/false, 'l' for null, 's' unlikely but safe
+                break
+            # 当前尾部是非法字符(如冒号、逗号、空键名开头等)，回退一个 token
+            s = stripped[:-1]
+
+        # 移除尾部悬挂的逗号
+        s = _re.sub(r',\s*$', '', s)
+
+        # --- Step 3: 补齐缺失的闭合括号 ---
+        open_braces = s.count('{') - s.count('}')
+        open_brackets = s.count('[') - s.count(']')
+
+        # 更精确: 扫描非字符串中的括号
+        stack = []
+        in_str2 = False
+        esc2 = False
+        for ch in s:
+            if esc2:
+                esc2 = False
+                continue
+            if ch == '\\' and in_str2:
+                esc2 = True
+                continue
+            if ch == '"':
+                in_str2 = not in_str2
+                continue
+            if in_str2:
+                continue
+            if ch in ('{', '['):
+                stack.append(ch)
+            elif ch == '}' and stack and stack[-1] == '{':
+                stack.pop()
+            elif ch == ']' and stack and stack[-1] == '[':
+                stack.pop()
+
+        # 用精确的 stack 逆序关闭
+        closing = [']' if c == '[' else '}' for c in reversed(stack)]
+        if closing:
+            s += '\n' + ''.join(closing)
+
+        return s
+
+    def _llm_repair_json(self, broken_json: str) -> str:
+        """使用 LLM 修复无法自动修复的 JSON（最后手段）"""
+        llm = get_llm()
+        # 只发送尾部 2000 字符以节省 token
+        tail = broken_json[-2000:] if len(broken_json) > 2000 else broken_json
+        head = broken_json[:500] if len(broken_json) > 500 else broken_json
+
+        repair_prompt = f"""以下是一段被截断的旅行计划 JSON，请你补全它使其成为合法的 JSON。
+只输出修复后的完整 JSON，不要输出任何解释文字。
+
+开头部分:
+{head}
+
+...(中间省略)...
+
+尾部被截断部分:
+{tail}
+"""
+        try:
+            response = llm._client.chat.completions.create(
+                model=llm.model,
+                messages=[{"role": "user", "content": repair_prompt}],
+                temperature=0.0,
+                max_tokens=1500,
+            )
+            content = response.choices[0].message.content or ""
+            # 从修复结果中提取 JSON
+            import re as _re
+            if "```json" in content:
+                start = content.find("```json") + 7
+                end = content.find("```", start)
+                if end > start:
+                    return content[start:end].strip()
+            if "```" in content:
+                start = content.find("```") + 3
+                end = content.find("```", start)
+                if end > start:
+                    return content[start:end].strip()
+            match = _re.search(r'\{[\s\S]*\}', content)
+            if match:
+                return match.group()
+            return content
+        except Exception as e:
+            print(f"⚠️  LLM 修复 JSON 失败: {e}")
+            return broken_json
+
     def _parse_response(self, response: str, request: TripRequest) -> TripPlan:
         """
         解析Agent响应，带有多层容错清理
@@ -583,54 +664,95 @@ class MultiAgentTripPlanner:
             if "```json" in response:
                 json_start = response.find("```json") + 7
                 json_end = response.find("```", json_start)
-                json_str = response[json_start:json_end].strip()
+                # 如果没有找到闭合的 ```，说明输出被截断，取到末尾
+                if json_end == -1 or json_end <= json_start:
+                    json_str = response[json_start:].strip()
+                else:
+                    json_str = response[json_start:json_end].strip()
             elif "```" in response:
                 json_start = response.find("```") + 3
                 json_end = response.find("```", json_start)
-                json_str = response[json_start:json_end].strip()
-            elif "{" in response and "}" in response:
+                if json_end == -1 or json_end <= json_start:
+                    json_str = response[json_start:].strip()
+                else:
+                    json_str = response[json_start:json_end].strip()
+            elif "{" in response:
                 json_start = response.find("{")
-                json_end = response.rfind("}") + 1
-                json_str = response[json_start:json_end]
+                json_end = response.rfind("}")
+                if json_end > json_start:
+                    json_str = response[json_start:json_end + 1]
+                else:
+                    # 没有闭合的 }，取到末尾（截断场景）
+                    json_str = response[json_start:]
             else:
                 raise ValueError("响应中未找到JSON数据")
             
             # ====== 第1轮：基础清理 + 解析 ======
             json_str = self._sanitize_json_str(json_str)
             
-            try:
-                data = json.loads(json_str)
-            except json.JSONDecodeError as e1:
-                # 打印出错位置附近的内容供远程调试
-                pos = e1.pos if hasattr(e1, 'pos') else 0
-                context_start = max(0, pos - 60)
-                context_end = min(len(json_str), pos + 60)
-                print(f"⚠️  首次 JSON 解析失败: {e1}")
-                print(f"   出错位置附近内容: ...{json_str[context_start:context_end]}...")
-                
-                # ====== 第2轮：修复内嵌未转义引号 ======
-                print(f"   尝试修复未转义引号...")
-                fixed = self._fix_unescaped_quotes(json_str)
+            parse_attempts = [
+                ("基础清理", json_str),
+            ]
+
+            # 预生成各轮修复候选
+            fixed_quotes = self._fix_unescaped_quotes(json_str)
+            parse_attempts.append(("修复未转义引号", fixed_quotes))
+
+            # 截断修复
+            repaired = self._repair_truncated_json(json_str)
+            if repaired != json_str:
+                parse_attempts.append(("截断修复", repaired))
+                # 截断修复 + 引号修复
+                repaired_fixed = self._fix_unescaped_quotes(repaired)
+                if repaired_fixed != repaired:
+                    parse_attempts.append(("截断+引号修复", repaired_fixed))
+
+            # 暴力正则提取
+            match = _re.search(r'\{[\s\S]*\}', json_str)
+            if match:
+                brutal = self._sanitize_json_str(match.group())
+                brutal = self._fix_unescaped_quotes(brutal)
+                parse_attempts.append(("正则提取", brutal))
+                # 对正则提取的结果也做截断修复
+                brutal_repaired = self._repair_truncated_json(brutal)
+                if brutal_repaired != brutal:
+                    parse_attempts.append(("正则+截断修复", brutal_repaired))
+
+            # 依次尝试每种修复
+            last_error = None
+            for attempt_name, candidate in parse_attempts:
                 try:
-                    data = json.loads(fixed)
-                except json.JSONDecodeError as e2:
-                    print(f"⚠️  第2轮修复仍失败: {e2}")
-                    
-                    # ====== 第3轮：暴力正则提取最外层对象 ======
-                    print(f"   尝试正则提取最外层JSON对象...")
-                    match = _re.search(r'\{[\s\S]*\}', json_str)
-                    if match:
-                        brutal = self._sanitize_json_str(match.group())
-                        brutal = self._fix_unescaped_quotes(brutal)
-                        data = json.loads(brutal)
+                    data = json.loads(candidate)
+                    if attempt_name != "基础清理":
+                        print(f"✅ JSON 通过「{attempt_name}」成功解析")
+                    # 转换为TripPlan对象
+                    return TripPlan(**data)
+                except (json.JSONDecodeError, Exception) as e:
+                    last_error = e
+                    if attempt_name == "基础清理":
+                        pos = e.pos if hasattr(e, 'pos') else 0
+                        context_start = max(0, pos - 60)
+                        context_end = min(len(candidate), pos + 60)
+                        print(f"⚠️  首次 JSON 解析失败: {e}")
+                        print(f"   出错位置附近内容: ...{candidate[context_start:context_end]}...")
                     else:
-                        raise
+                        print(f"⚠️  「{attempt_name}」仍失败: {e}")
+
+            # ====== 最终手段：LLM 修复 ======
+            print("🔧 所有本地修复均失败，尝试使用 LLM 修复 JSON...")
+            llm_fixed = self._llm_repair_json(json_str)
+            llm_fixed = self._sanitize_json_str(llm_fixed)
+            try:
+                data = json.loads(llm_fixed)
+                print("✅ JSON 通过 LLM 修复成功解析")
+                return TripPlan(**data)
+            except Exception as e_llm:
+                print(f"⚠️  LLM 修复后仍然解析失败: {e_llm}")
+                # 最终 raise 最初的错误
+                raise ValueError(f"行程 JSON 解析失败: {str(last_error)}") from last_error
             
-            # 转换为TripPlan对象
-            trip_plan = TripPlan(**data)
-            
-            return trip_plan
-            
+        except ValueError:
+            raise
         except Exception as e:
             print(f"⚠️  解析响应失败: {str(e)}")
             raise ValueError(f"行程 JSON 解析失败: {str(e)}") from e
