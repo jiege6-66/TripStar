@@ -88,6 +88,30 @@
                 </div>
               </a-form-item>
             </div>
+
+            <!-- 中转城市 -->
+            <div v-if="formData.cities.length > 0 || showTransit" class="transit-section">
+              <div class="transit-header">
+                <span class="field-label">{{ t('home.transitCities') }}</span>
+              </div>
+              <div v-for="(c, idx) in formData.cities" :key="idx" class="transit-item">
+                <a-input
+                  v-model:value="formData.cities[idx]"
+                  :placeholder="t('home.transitCityPlaceholder')"
+                  size="large"
+                  class="dark-input"
+                />
+                <button type="button" class="transit-remove-btn" @click="removeTransitCity(idx)">✕</button>
+              </div>
+              <button type="button" class="transit-add-btn" @click="addTransitCity">
+                + {{ t('home.addTransitCity') }}
+              </button>
+            </div>
+            <div v-else class="transit-trigger">
+              <button type="button" class="transit-toggle-btn" @click="showTransit = true">
+                + {{ t('home.addTransitCity') }}
+              </button>
+            </div>
           </div>
 
           <!-- Step 2: 偏好设置 -->
@@ -208,6 +232,7 @@ const { t } = useI18n()
 const loading = ref(false)
 const loadingProgress = ref(0)
 const loadingStatus = ref('')
+const showTransit = ref(false)
 
 const getStageStatusText = (stage: TripTaskEvent['stage']) => {
   if (stage === 'submitted' || stage === 'initializing') return t('home.loading.initializing')
@@ -242,6 +267,7 @@ type HomeFormData = Omit<TripFormData, 'start_date' | 'end_date'> & {
 
 const formData = reactive<HomeFormData>({
   city: '',
+  cities: [] as string[],
   start_date: null,
   end_date: null,
   travel_days: 1,
@@ -250,6 +276,14 @@ const formData = reactive<HomeFormData>({
   preferences: [],
   free_text_input: ''
 })
+
+const addTransitCity = () => {
+  formData.cities.push('')
+}
+
+const removeTransitCity = (idx: number) => {
+  formData.cities.splice(idx, 1)
+}
 
 const togglePreference = (value: string) => {
   const idx = formData.preferences.indexOf(value)
@@ -313,6 +347,13 @@ const handleSubmit = async () => {
       accommodation: formData.accommodation,
       preferences: formData.preferences,
       free_text_input: formData.free_text_input
+    }
+
+    if (formData.cities && formData.cities.length > 0) {
+      const allCities = [formData.city, ...formData.cities].filter(Boolean)
+      if (allCities.length > 1) {
+        requestData.cities = allCities
+      }
     }
 
     const response = await generateTripPlan(requestData, {
@@ -556,6 +597,45 @@ const handleSubmit = async () => {
 
 .fields-2 {
   grid-template-columns: 1fr 1fr;
+}
+
+.transit-section {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.transit-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.transit-remove-btn {
+  background: rgba(255,107,107,0.15);
+  border: 1px solid rgba(255,107,107,0.3);
+  border-radius: 8px;
+  color: #FF6B6B;
+  cursor: pointer;
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+.transit-add-btn, .transit-toggle-btn {
+  background: rgba(255,179,71,0.08);
+  border: 1px solid rgba(255,179,71,0.2);
+  border-radius: 10px;
+  color: #FFD699;
+  cursor: pointer;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  width: fit-content;
+}
+
+.transit-trigger {
+  margin-top: 8px;
 }
 
 /* 表单标签 */
@@ -877,6 +957,10 @@ const handleSubmit = async () => {
 
   .interest-group {
     grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .transit-item {
+    flex-wrap: wrap;
   }
 }
 </style>

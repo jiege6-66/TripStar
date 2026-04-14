@@ -48,6 +48,8 @@ export interface Budget {
 export interface DayPlan {
   date: string
   day_index: number
+  city?: string
+  transit_transport?: string | null
   description: string
   transportation: string
   accommodation: string
@@ -68,6 +70,7 @@ export interface WeatherInfo {
 
 export interface TripPlan {
   city: string
+  cities?: string[]
   start_date: string
   end_date: string
   days: DayPlan[]
@@ -78,6 +81,7 @@ export interface TripPlan {
 
 export interface TripFormData {
   city: string
+  cities?: string[]
   start_date: string
   end_date: string
   travel_days: number

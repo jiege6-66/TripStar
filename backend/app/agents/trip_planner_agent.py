@@ -91,6 +91,8 @@ PLANNER_AGENT_PROMPT = """你是行程规划专家。你的任务是根据景点
     {
       "date": "YYYY-MM-DD",
       "day_index": 0,
+      "city": "城市名称",
+      "transit_transport": null,
       "description": "第1天行程概述",
       "transportation": "交通方式",
       "accommodation": "住宿类型",
@@ -165,8 +167,10 @@ PLANNER_AGENT_PROMPT = """你是行程规划专家。你的任务是根据景点
    - 餐饮预估费用(estimated_cost)
    - 酒店预估费用(estimated_cost)
    - 预算汇总(budget)包含各项总费用
-9. **预约信息透传**: 如果景点搜索数据中包含 reservation_required 和 reservation_tips 字段，请务必将它们完整保留在对应景点的JSON中。需要预约的景点请在 description 中也提醒游客提前预约
 8. **景点图片**: 不需要在JSON中填写 image_url 字段，图片由前端根据景点名称自动从小红书获取。
+9. **预约信息透传**: 如果景点搜索数据中包含 reservation_required 和 reservation_tips 字段，请务必将它们完整保留在对应景点的JSON中。需要预约的景点请在 description 中也提醒游客提前预约
+10. **多城市行程**: 如果规划包含多个城市，每个 DayPlan 的 `city` 字段必须填写当天所在的城市名称；单城市行程时 city 字段可省略。两座城市之间的转场日（乘高铁/飞机）的 attractions 可以减少到 1 个，description 中需说明转场方式。
+11. **转场日交通**: 如果上下文包含"城际交通方案"，请将对应转场日（从城市A前往城市B的那天）的 `transit_transport` 字段填写为简洁的交通建议（例如："推荐乘坐G1234次高铁，约2小时，二等座约300元"），其他普通游览日 transit_transport 填 null。
 """
 
 
@@ -253,7 +257,7 @@ class MultiAgentTripPlanner:
         result = progress_callback(stage, message, progress)
         if asyncio.iscoroutine(result):
             await result
-    
+
     async def plan_trip(
         self,
         request: TripRequest,
@@ -275,7 +279,10 @@ class MultiAgentTripPlanner:
         try:
             print(f"\n{'='*60}")
             print(f"🚀 开始多智能体协作规划旅行（并发优化模式）...")
-            print(f"目的地: {request.city}")
+            effective_cities = request.cities if (request.cities and len(request.cities) > 1) else [request.city]
+            is_multi_city = len(effective_cities) > 1
+
+            print(f"目的地: {' -> '.join(effective_cities)}")
             print(f"日期: {request.start_date} 至 {request.end_date}")
             print(f"天数: {request.travel_days}天")
             print(f"偏好: {', '.join(request.preferences) if request.preferences else '无'}")
@@ -284,29 +291,87 @@ class MultiAgentTripPlanner:
             # ========== 串行阶段: 步骤1-3 依次执行 ==========
             print("⏳ 依次执行步骤1-3: 搜索景点 -> 查询天气 -> 搜索酒店...")
 
-            # 构建各Agent的查询
-            weather_query = f"请查询{request.city}的天气信息"
-            hotel_query = f"请搜索{request.city}的{request.accommodation}酒店"
+            from ..services.xhs_service import search_xhs_attractions
+            keywords = request.preferences[0] if request.preferences else "景点"
 
             # 依次执行,避免多个线程同时启动 uvx 子进程导致资源竞争和超时
             print("  [1/3] 正在使用小红书服务搜索景点...")
             await self._emit_progress(progress_callback, "attraction_search", "正在使用小红书搜索景点...", 30)
-            from ..services.xhs_service import search_xhs_attractions
-            keywords = request.preferences[0] if request.preferences else "景点"
-            attraction_response = await asyncio.to_thread(search_xhs_attractions, request.city, keywords)
-            print(f"📍 景点搜索结果: {attraction_response[:200]}...")
+            if is_multi_city:
+                all_attraction_parts = []
+                for idx, c in enumerate(effective_cities):
+                    kw = request.preferences[0] if request.preferences else "景点"
+                    part = await asyncio.to_thread(search_xhs_attractions, c, kw)
+                    all_attraction_parts.append(f"=== {c} ===\n{part}")
+                    print(f"📍 景点搜索结果[{idx + 1}/{len(effective_cities)} {c}]: {part[:200]}...")
+                attraction_response = "\n".join(all_attraction_parts)
+            else:
+                attraction_response = await asyncio.to_thread(search_xhs_attractions, request.city, keywords)
+                print(f"📍 景点搜索结果: {attraction_response[:200]}...")
 
             print("  [2/3] 正在查询天气...")
             await self._emit_progress(progress_callback, "weather_search", "正在查询天气信息...", 50)
-            weather_response = await asyncio.to_thread(self.weather_agent.run, weather_query)
-            print(f"🌤️  天气查询结果: {weather_response[:200]}...")
+            if is_multi_city:
+                weather_parts = []
+                for idx, c in enumerate(effective_cities):
+                    wq = f"请查询{c}的天气信息"
+                    wr = await asyncio.to_thread(self.weather_agent.run, wq)
+                    weather_parts.append(f"=== {c} ===\n{wr}")
+                    print(f"🌤️  天气查询结果[{idx + 1}/{len(effective_cities)} {c}]: {wr[:200]}...")
+                weather_response = "\n".join(weather_parts)
+            else:
+                weather_query = f"请查询{request.city}的天气信息"
+                weather_response = await asyncio.to_thread(self.weather_agent.run, weather_query)
+                print(f"🌤️  天气查询结果: {weather_response[:200]}...")
 
             print("  [3/3] 正在搜索酒店...")
             await self._emit_progress(progress_callback, "hotel_search", "正在搜索酒店推荐...", 70)
-            hotel_response = await asyncio.to_thread(self.hotel_agent.run, hotel_query)
-            print(f"🏨 酒店搜索结果: {hotel_response[:200]}...")
+            if is_multi_city:
+                hotel_parts = []
+                for idx, c in enumerate(effective_cities):
+                    hq = f"请搜索{c}的{request.accommodation}酒店"
+                    hr = await asyncio.to_thread(self.hotel_agent.run, hq)
+                    hotel_parts.append(f"=== {c} ===\n{hr}")
+                    print(f"🏨 酒店搜索结果[{idx + 1}/{len(effective_cities)} {c}]: {hr[:200]}...")
+                hotel_response = "\n".join(hotel_parts)
+            else:
+                hotel_query = f"请搜索{request.city}的{request.accommodation}酒店"
+                hotel_response = await asyncio.to_thread(self.hotel_agent.run, hotel_query)
+                print(f"🏨 酒店搜索结果: {hotel_response[:200]}...")
 
             print(f"\n✅ 基础信息搜集完成\n")
+
+            # ========== 多城市转场交通查询 ==========
+            transport_info = ""
+            if is_multi_city:
+                from ..services.transport_service import query_transport
+
+                await self._emit_progress(progress_callback, "planning", "正在查询城际交通方案...", 78)
+                print("  [4/4] 正在查询城际转场交通...")
+
+                # 计算每个城市大约从第几天开始
+                days_per_city = request.travel_days // len(effective_cities)
+                extra_days = request.travel_days % len(effective_cities)
+
+                from datetime import datetime, timedelta
+                start_dt = datetime.strptime(request.start_date, "%Y-%m-%d")
+
+                transport_parts = []
+                offset = 0
+                for i, city in enumerate(effective_cities[:-1]):
+                    d = days_per_city + (1 if i < extra_days else 0)
+                    offset += d
+                    transit_date = (start_dt + timedelta(days=offset - 1)).strftime("%Y-%m-%d")
+                    next_city = effective_cities[i + 1]
+                    print(f"    查询 {city} → {next_city} ({transit_date})...")
+                    result = await query_transport(city, next_city, transit_date)
+                    if result:
+                        transport_parts.append(
+                            f"【{city} → {next_city}（{transit_date}）】\n{result}"
+                        )
+
+                if transport_parts:
+                    transport_info = "\n\n**城际交通方案（供转场日参考）:**\n" + "\n\n".join(transport_parts)
 
             # ========== 串行阶段: 步骤4 整合生成 ==========
             print("📋 步骤4: 生成行程计划...")
@@ -318,7 +383,7 @@ class MultiAgentTripPlanner:
                 request,
                 attraction_response,
                 weather_response,
-                hotel_response,
+                hotel_response + transport_info,
             )
             print(f"行程规划结果: {planner_response[:300]}...\n")
 
@@ -388,6 +453,27 @@ class MultiAgentTripPlanner:
 
     def _build_planner_query(self, request: TripRequest, attractions: str, weather: str, hotels: str = "") -> str:
         """构建行程规划查询"""
+        effective_cities = request.cities if (request.cities and len(request.cities) > 1) else None
+        if effective_cities:
+            city_info = f"多城市行程（按顺序）: {' → '.join(effective_cities)}"
+            days_per_city = request.travel_days // len(effective_cities)
+            extra_days = request.travel_days % len(effective_cities)
+            city_days = []
+            for i, c in enumerate(effective_cities):
+                d = days_per_city + (1 if i < extra_days else 0)
+                city_days.append(f"{c}约{d}天")
+            city_schedule = "、".join(city_days)
+            extra_city_req = (
+                f"\n**多城市要求:**\n"
+                f"- 城市路线: {city_info}\n"
+                f"- 建议分配: {city_schedule}\n"
+                f"- 每个 DayPlan 必须包含 city 字段标明当天所在城市\n"
+                f"- 城市间转场当天的 transit_transport 字段必须填写推荐交通方式\n"
+                f"- 城市间转场那天的 description 需说明交通方式（高铁/飞机等）\n"
+            )
+        else:
+            extra_city_req = ""
+
         query = f"""请根据以下信息生成{request.city}的{request.travel_days}天旅行计划:
 
 **基本信息:**
@@ -415,7 +501,7 @@ class MultiAgentTripPlanner:
 4. 返回完整的JSON格式数据
 5. 景点的经纬度坐标要真实准确
 6. 如果天气或酒店信息不足，请基于保守、通用的旅行建议补齐，但不要输出“无法查询”之类的解释文字
-"""
+{extra_city_req}"""
         if request.free_text_input:
             query += f"\n**额外要求:** {request.free_text_input}"
 
@@ -822,4 +908,3 @@ def reset_trip_planner_agent() -> None:
     """重置旅行规划多智能体实例（用于运行时配置更新后热生效）。"""
     global _multi_agent_planner
     _multi_agent_planner = None
-

@@ -10,6 +10,7 @@ from datetime import date
 class TripRequest(BaseModel):
     """旅行规划请求"""
     city: str = Field(..., description="目的地城市", example="北京")
+    cities: Optional[List[str]] = Field(default=None, description="多城市行程列表（按顺序游览），设置后优先级高于 city 字段")
     start_date: str = Field(..., description="开始日期 YYYY-MM-DD", example="2025-06-01")
     end_date: str = Field(..., description="结束日期 YYYY-MM-DD", example="2025-06-03")
     travel_days: int = Field(..., description="旅行天数", ge=1, le=30, example=3)
@@ -100,6 +101,8 @@ class DayPlan(BaseModel):
     """单日行程"""
     date: str = Field(..., description="日期 YYYY-MM-DD")
     day_index: int = Field(..., description="第几天(从0开始)")
+    city: Optional[str] = Field(default=None, description="当天所在城市（多城市行程时使用）")
+    transit_transport: Optional[str] = Field(default=None, description="城际交通方案描述（多城市转场日使用）")
     description: str = Field(..., description="当日行程描述")
     transportation: str = Field(..., description="交通方式")
     accommodation: str = Field(..., description="住宿")
@@ -146,6 +149,7 @@ class Budget(BaseModel):
 class TripPlan(BaseModel):
     """旅行计划"""
     city: str = Field(..., description="目的地城市")
+    cities: Optional[List[str]] = Field(default=None, description="多城市行程列表")
     start_date: str = Field(..., description="开始日期")
     end_date: str = Field(..., description="结束日期")
     days: List[DayPlan] = Field(..., description="每日行程")

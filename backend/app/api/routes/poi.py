@@ -1,6 +1,10 @@
 """POI相关API路由"""
 
+from urllib.parse import quote, unquote
+
+import httpx
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from ...services.amap_service import get_amap_service
@@ -119,7 +123,7 @@ async def get_attraction_photo(name: str, city: Optional[str] = None):
             "message": "获取图片成功",
             "data": {
                 "name": name,
-                "photo_url": photo_url
+                "photo_url": f"/api/poi/photo-proxy?url={quote(photo_url, safe='')}" if photo_url else ""
             }
         }
 
@@ -130,3 +134,35 @@ async def get_attraction_photo(name: str, city: Optional[str] = None):
             detail=f"获取景点图片失败: {str(e)}"
         )
 
+
+@router.get(
+    "/photo-proxy",
+    summary="代理获取景点图片",
+    description="服务端转发小红书图片，解决浏览器跨域/Referer 拦截问题"
+)
+async def proxy_attraction_photo(url: str):
+    """
+    服务端代理获取图片，避免浏览器直接请求 XHS CDN 被 Referer 拦截。
+    url 参数为 URL-encoded 的原始图片地址。
+    """
+    real_url = unquote(url)
+    if not real_url.startswith("http"):
+        raise HTTPException(status_code=400, detail="无效的图片 URL")
+
+    try:
+        headers = {
+            "Referer": "https://www.xiaohongshu.com/",
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+        }
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(real_url, headers=headers, follow_redirects=True)
+            resp.raise_for_status()
+
+        content_type = resp.headers.get("content-type", "image/jpeg")
+        return StreamingResponse(iter([resp.content]), media_type=content_type)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"图片代理失败: {str(e)}")
